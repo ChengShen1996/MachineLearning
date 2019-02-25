@@ -5,16 +5,19 @@ import csv
 np.version.version
 train_data 	= np.genfromtxt('propublicaTrain.csv',usecols=(1,2,3,4,5,6,7,8,9),skip_header = 1, dtype = 'int8',delimiter=',')
 train_label	= np.genfromtxt('propublicaTrain.csv', usecols=(0), skip_header = 1, dtype = 'int8',delimiter=',')
-choices = np.random.choice(train_data.shape[0],2000,replace=False)
-train_data = train_data[choices]
-train_label = train_label[choices]
-print(train_data.shape)
+
 
 
 test_data 	= np.genfromtxt('propublicaTest.csv',usecols=(1,2,3,4,5,6,7,8,9),skip_header = 1, dtype = 'int8',delimiter=',')
 test_label 	= np.genfromtxt('propublicaTest.csv', usecols=(0), skip_header = 1, dtype = 'int8',delimiter=',')
 train_num,_ = train_data.shape
 test_num,_ = test_data.shape
+test_data_0 = test_data[test_data[:,2] == 0]
+test_data_1 = test_data[test_data[:,2] == 1]
+print(test_data_0.shape)
+print(test_data_1.shape)
+
+
 
 condition_0 = np.equal(train_label,np.zeros(train_num,dtype='int8'))
 data_0 = train_data[condition_0]
@@ -42,46 +45,82 @@ cov_inv_0 = la.inv(cov_0+small)
 small = np.eye(cov_1.shape[0]) * 0.000001
 cov_inv_1 = la.inv(cov_1+small)
 
-count = 0
-for i in range(train_num):
-	val = train_data[i]
+
+m,n = test_data_0.shape
+count_0 = [0,0,0]
+for i in range(m):
+	val = test_data_0[i]
 	val_0 = val - mean_0
 	val_1 = val - mean_1
 	result_0 = np.exp(-0.5*np.dot(np.dot(np.transpose(val_0),cov_inv_0),val_0))
 	result_1 = np.exp(-0.5*np.dot(np.dot(np.transpose(val_1),cov_inv_1),val_1))
 	result_0 *= prob_0
 	result_1 *= prob_1
-	label = 0
+	predict_label = 0
 	if result_1>result_0:
-		label = 1
-	if label == train_label[i].item(0):
-		count+=1
-train_acc = count/train_num
-print("Train acc: ", train_acc)
+		predict_label = 1
+	if predict_label==0:
+		count_0[0]+=1
+	if test_label[i].item(0) ==0:
+		count_0[2]+=1
+	if test_label[i].item(0) == 0 and predict_label ==0:
+		count_0[1]+=1
+
+DP_0 = count_0[0]/m
+EO_0 = count_0[1]/count_0[2]
+PP_0 = count_0[1]/count_0[0]
+print("DP a=0:",DP_0)
+print("EO a=0:",EO_0)
+print("PP a=0:",PP_0)
+print(count_0)
 
 
-count = 0
-for i in range(test_num):
-	val = test_data[i]
+m,n = test_data_1.shape
+count_1 = [0,0,0]
+for i in range(m):
+	val = test_data_1[i]
 	val_0 = val - mean_0
 	val_1 = val - mean_1
 	result_0 = np.exp(-0.5*np.dot(np.dot(np.transpose(val_0),cov_inv_0),val_0))
 	result_1 = np.exp(-0.5*np.dot(np.dot(np.transpose(val_1),cov_inv_1),val_1))
 	result_0 *= prob_0
 	result_1 *= prob_1
-	label = 0
+	predict_label = 0
 	if result_1>result_0:
-		label = 1
-	if label == test_label[i].item(0):
-		count+=1
-test_acc = count/test_num
-print("Test acc: ",test_acc)
+		predict_label = 1
+	if predict_label==0:
+		count_1[0]+=1
+	if test_label[i].item(0) ==0:
+		count_1[2]+=1
+	if test_label[i].item(0) == 0 and predict_label ==0:
+		count_1[1]+=1
 
-with open('result2.csv', 'a') as f:
+DP_1 = count_1[0]/m
+EO_1 = count_1[1]/count_1[2]
+PP_1 = count_1[1]/count_1[0]
+print("DP a=0:",DP_1)
+print("EO a=0:",EO_1)
+print("PP a=0:",PP_1)
+print(count_1)
+
+
+DP_fair = abs(DP_1-DP_0)
+EO_fair = abs(EO_1-EO_0)
+PP_fair = abs(PP_1-PP_0)
+print("DP_fair: ",DP_fair)
+print("EO_fair: ",EO_fair)
+print("PP_fair: ",PP_fair)
+
+
+with open('DP_result.csv', 'a') as f:
 	writer = csv.writer(f)
-	writer.writerow(['bayes',train_acc,test_acc])
+	writer.writerow(['bayes',DP_fair])
 
+with open('EO_result.csv', 'a') as f:
+	writer = csv.writer(f)
+	writer.writerow(['bayes',EO_fair])
 
-
-
+with open('PP_result.csv', 'a') as f:
+	writer = csv.writer(f)
+	writer.writerow(['bayes',PP_fair])
 

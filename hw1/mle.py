@@ -3,6 +3,8 @@ from numpy.linalg import inv
 import csv
 np.version.version
 train_data 	= np.genfromtxt('propublicaTrain.csv', skip_header = 1, dtype = 'int8',delimiter=',')
+train_data = train_data[np.random.choice(train_data.shape[0],2000,replace=False)]
+print(train_data.shape)
 
 test_data 	= np.genfromtxt('propublicaTest.csv', skip_header = 1, dtype = 'int8',delimiter=',')
 
@@ -15,15 +17,14 @@ print(train_data[1])
 mean = np.mean(train_data, axis = 0)
 var = np.var(train_data, axis = 0)
 cov = np.cov(np.transpose(train_data))
-print(mean)
-print(var)
-print(cov.shape)
+# print(mean)
+# print(var)
+# print(cov.shape)
 m,n = train_data.shape
 small = np.eye(cov.shape[0]) *0.00001
 cov_inv = inv(cov+small)
 train_predict = np.zeros(m)
 count = 0
-print("--------------------------------")
 for i in range(m):
 	val = train_data[i][1:]
 	label_1 = np.array([1])
@@ -39,14 +40,12 @@ for i in range(m):
 		train_predict[i] = 1
 	if train_predict[i] == train_data[i][0]:
 		count+=1
-print(count)
 train_acc = count/m
-print(train_acc)
+print("Train acc: ", train_acc)
 
 m,n = test_data.shape
 test_predict = np.zeros(m)
 count = 0
-print("--------------------------------")
 for i in range(m):
 	val = test_data[i][1:]
 	label_1 = np.array([1])
@@ -63,10 +62,9 @@ for i in range(m):
 		test_predict[i] = 1
 	if test_predict[i] == test_data[i][0]:
 		count+=1
-print(count)
 test_acc = count/m
-print(test_acc)
+print("Test acc: ",test_acc)
 
-with open('result.csv', 'a') as f:
+with open('result2.csv', 'a') as f:
 	writer = csv.writer(f)
 	writer.writerow(['mle',train_acc,test_acc])

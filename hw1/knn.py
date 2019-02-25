@@ -5,6 +5,10 @@ import csv
 np.version.version
 train_data 	= np.genfromtxt('propublicaTrain.csv', usecols=(1,2,3,4,5,6,7,8,9),skip_header = 1, dtype = 'int8',delimiter=',')
 train_label	= np.genfromtxt('propublicaTrain.csv', usecols=(0), skip_header = 1, dtype = 'int8',delimiter=',')
+choices = np.random.choice(train_data.shape[0],2000,replace=False)
+train_data = train_data[choices]
+train_label = train_label[choices]
+print(train_data.shape)
 
 test_data 	= np.genfromtxt('propublicaTest.csv', usecols=(1,2,3,4,5,6,7,8,9),skip_header = 1, dtype = 'int8',delimiter=',')
 test_label 	= np.genfromtxt('propublicaTest.csv', usecols=(0), skip_header = 1, dtype = 'int8',delimiter=',')
@@ -18,7 +22,10 @@ args = parser.parse_args()
 
 # print(train_data.shape,train_label.shape, test_data.shape,test_label.shape)
 k=args.k
-norm_order = args.norm
+if args.norm<0:
+	norm_order = np.inf
+else:
+	norm_order = args.norm
 half = int(k/2)
 
 
@@ -47,14 +54,14 @@ train_acc = count/m
 m,n = test_data.shape
 count = 0
 for i in range(m):
-	diff = np.subtract(test_data,test_data[i])
+	diff = np.subtract(train_data,test_data[i])
 	norm = la.norm(diff, ord = norm_order, axis = 1)
 	temp = np.argsort(norm)
 	temp = temp[0:k]
 
 	count_1 = 0
 	for x in temp:
-		if test_label[x].item(0)>0:
+		if train_label[x].item(0)>0:
 			count_1+=1
 	if count_1> half:
 		if test_label[i].item(0) ==1:
@@ -66,6 +73,6 @@ for i in range(m):
 print('test   ',count/m)
 test_acc = count/m
 
-with open('result.csv', 'a') as f:
+with open('result2.csv', 'a') as f:
 	writer = csv.writer(f)
 	writer.writerow(['knn-k'+str(k)+'-c'+str(norm_order),train_acc,test_acc])
